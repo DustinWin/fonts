@@ -9,13 +9,6 @@ on:
     paths-ignore:
       - "**/README.md"
 
-env:
-  misans_download_url: https://hyperos.mi.com/font-download
-  firacode_download_url: https://github.com/ryanoasis/nerd-fonts/releases/download
-  sarasa_download_url: https://github.com/be5invis/Sarasa-Gothic/releases/download
-  lxgw_download_url: https://github.com/lxgw/LxgwWenKai/releases/download
-  source_download_url: https://raw.githubusercontent.com/adobe-fonts/source-han-serif/release/OTF/SimplifiedChinese
-
 jobs:
   Update:
     runs-on: ubuntu-latest
@@ -23,9 +16,18 @@ jobs:
     - name: Clone Repository
       uses: actions/checkout@main
 
-    - name: Download and push `MiSans`
+    - name: Set variables
       run: |
         echo "update_version=$(date -d '+8 hours' +%Y-%m-%d)" >> ${GITHUB_ENV}
+        echo "misans_download_url=https://hyperos.mi.com/font-download" >> ${GITHUB_ENV}
+        echo "firacode_download_url=https://github.com/ryanoasis/nerd-fonts/releases/download" >> ${GITHUB_ENV}
+        echo "sarasa_download_url=https://github.com/be5invis/Sarasa-Gothic/releases/download" >> ${GITHUB_ENV}
+        echo "lxgw_download_url=https://github.com/lxgw/LxgwWenKai/releases/download" >> ${GITHUB_ENV}
+        echo "source_download_url=https://raw.githubusercontent.com/adobe-fonts/source-han-serif/release/OTF/SimplifiedChinese" >> ${GITHUB_ENV}
+      shell: bash
+
+    - name: Download and push `MiSans`
+      run: |
         mkdir -p ./tmp/ ./MiSans/ ./FiraCode-Nerd/ ./Sarasa-Gothic/ ./LxgwWenKai/ ./Source-Han-Serif/ ./Fonts/
         wget -P ./tmp/ "${misans_download_url}/MiSans.zip"
         unzip -o ./tmp/MiSans.zip -d ./tmp/
