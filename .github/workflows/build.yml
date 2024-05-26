@@ -18,7 +18,8 @@ jobs:
 
     - name: Set variables
       run: |
-        echo "update_version=$(date -d '+8 hours' +%Y-%m-%d)" >> ${GITHUB_ENV}
+        echo "misans_update_version=$(date -d '+8 hours' +%Y-%m-%d)" >> ${GITHUB_ENV}
+        echo "fonts_update_version=$(date -d '+8 hours' +%Y-%m-%d)" >> ${GITHUB_ENV}
         echo "misans_download_url=https://hyperos.mi.com/font-download" >> ${GITHUB_ENV}
         echo "firacode_download_url=https://github.com/ryanoasis/nerd-fonts/releases/download" >> ${GITHUB_ENV}
         echo "sarasa_download_url=https://github.com/be5invis/Sarasa-Gothic/releases/download" >> ${GITHUB_ENV}
@@ -38,7 +39,7 @@ jobs:
         rm -rf ./tmp*
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
-        git add ./MiSans/* && git commit -m "MiSans 字体更新于 ${update_version}" || exit 0
+        git add ./MiSans/* && git commit -m "MiSans 字体更新于 ${misans_update_version}" || exit 0
         git push -f
 
     - name: Download and push `FiraCode-Nerd`
@@ -133,7 +134,7 @@ jobs:
     - run: |
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
-        git add ./Fonts/* && git commit -m "字体更新于 ${update_version}" || exit 0
+        git add ./Fonts/* && git commit -m "字体更新于 ${fonts_update_version}" || exit 0
         git push -f
 
     - name: Purge jsDelivr CDN
