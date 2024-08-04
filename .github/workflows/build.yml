@@ -1,0 +1,190 @@
+name: Download fonts
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 19 * * *"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/README.md"
+
+jobs:
+  Update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone Repository
+      uses: actions/checkout@main
+
+    - name: Set variables
+      run: |
+        echo "update_version=$(date -d '+8 hours' +%Y-%m-%d)" >> ${GITHUB_ENV}
+        echo "harmonyossans_download_url=https://developer.huawei.com/images/download/next" >> ${GITHUB_ENV}
+        echo "firacode_download_url=https://github.com/ryanoasis/nerd-fonts/releases/download" >> ${GITHUB_ENV}
+        echo "sarasa_download_url=https://github.com/be5invis/Sarasa-Gothic/releases/download" >> ${GITHUB_ENV}
+        echo "lxgw_download_url=https://github.com/lxgw/LxgwWenKai/releases/download" >> ${GITHUB_ENV}
+        echo "source_download_url=https://raw.githubusercontent.com/adobe-fonts/source-han-serif/release/OTF/SimplifiedChinese" >> ${GITHUB_ENV}
+      shell: bash
+
+    - name: Download and push `HarmonyOS Sans`
+      run: |
+        mkdir -p ./tmp/ ./HarmonyOS-Sans/ ./FiraCode-Nerd/ ./Sarasa-Gothic/ ./LxgwWenKai/ ./Source-Han-Serif/ ./fonts/
+        wget -P ./tmp/ "${harmonyossans_download_url}/HarmonyOS-Sans.zip"
+        unzip -o ./tmp/HarmonyOS-Sans.zip -d ./tmp/
+        rm -rf ./HarmonyOS-Sans/*
+        mv -f "./tmp/HarmonyOS Sans /HarmonyOS_Sans_SC/HarmonyOS_SansSC_Bold.ttf" "./HarmonyOS-Sans/HarmonyOS Sans SC Bold.ttf"
+        mv -f "./tmp/HarmonyOS Sans /HarmonyOS_Sans_SC/HarmonyOS_SansSC_Light.ttf" "./HarmonyOS-Sans/HarmonyOS Sans SC Light.ttf"
+        mv -f "./tmp/HarmonyOS Sans /HarmonyOS_Sans_SC/HarmonyOS_SansSC_Regular.ttf" "./HarmonyOS-Sans/HarmonyOS Sans SC.ttf"
+        rm -rf ./tmp*
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git add ./HarmonyOS-Sans/* && git commit -m "HarmonyOS Sans 字体更新于 ${update_version}" || exit 0
+        git push -f
+
+    - name: Download and push `FiraCode-Nerd`
+      run: |
+        mkdir -p ./tmp/FiraCode-Nerd/
+        firacode_version=$(curl -sSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest | grep 'tag_name' | sed -e 's/.*v//' -e 's/".*//')
+        echo "firacode_version=${firacode_version}" >> ${GITHUB_ENV}
+        wget -P ./tmp/ "${firacode_download_url}/v${firacode_version}/FiraCode.zip"
+        unzip -o ./tmp/FiraCode.zip -d ./tmp/FiraCode-Nerd/
+        rm -rf ./FiraCode-Nerd/*
+        mv -f ./tmp/FiraCode-Nerd/FiraCodeNerdFontMono-Bold.ttf "./FiraCode-Nerd/FiraCode Nerd Font Mono Bold.ttf"
+        mv -f ./tmp/FiraCode-Nerd/FiraCodeNerdFontMono-Light.ttf "./FiraCode-Nerd/FiraCode Nerd Font Mono Light.ttf"
+        mv -f ./tmp/FiraCode-Nerd/FiraCodeNerdFontMono-Regular.ttf "./FiraCode-Nerd/FiraCode Nerd Font Mono.ttf"
+        rm -rf ./tmp*
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git add ./FiraCode-Nerd/* && git commit -m "更新 FiraCode Nerd 字体至 v${firacode_version}" || exit 0
+        git push -f
+
+    - name: Download and push `Sarasa-Gothic`
+      run: |
+        mkdir -p ./tmp/Sarasa-Gothic/
+        sarasa_version=$(curl -sSL https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest | grep 'tag_name' | sed -e 's/.*v//' -e 's/".*//')
+        echo "sarasa_version=${sarasa_version}" >> ${GITHUB_ENV}
+        wget -P ./tmp/ "${sarasa_download_url}/v${sarasa_version}/SarasaMonoSC-TTF-${sarasa_version}.7z"
+        7z x "./tmp/SarasaMonoSC-TTF-${sarasa_version}.7z" -otmp/Sarasa-Gothic/
+        rm -rf ./Sarasa-Gothic/*
+        mv -f ./tmp/Sarasa-Gothic/SarasaMonoSC-Bold.ttf "./Sarasa-Gothic/Sarasa Mono SC Bold.ttf"
+        mv -f ./tmp/Sarasa-Gothic/SarasaMonoSC-Italic.ttf "./Sarasa-Gothic/Sarasa Mono SC Italic.ttf"
+        mv -f ./tmp/Sarasa-Gothic/SarasaMonoSC-Light.ttf "./Sarasa-Gothic/Sarasa Mono SC Light.ttf"
+        mv -f ./tmp/Sarasa-Gothic/SarasaMonoSC-Regular.ttf "./Sarasa-Gothic/Sarasa Mono SC.ttf"
+        rm -rf ./tmp*
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git add ./Sarasa-Gothic/* && git commit -m "更新 Sarasa Gothic 字体至 v${sarasa_version}" || exit 0
+        git push -f
+
+    - name: Download and push `LxgwWenKai`
+      run: |
+        mkdir -p ./tmp/LxgwWenKai/
+        lxgw_version=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | grep 'tag_name' | sed -e 's/.*v/v/' -e 's/".*//')
+        echo "lxgw_version=${lxgw_version}" >> ${GITHUB_ENV}
+        rm -rf ./LxgwWenKai/*
+        curl -o "./LxgwWenKai/LXGW WenKai Bold.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Bold.ttf"
+        curl -o "./LxgwWenKai/LXGW WenKai Light.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Light.ttf"
+        curl -o "./LxgwWenKai/LXGW WenKai.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Regular.ttf"
+        rm -rf ./tmp*
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git add ./LxgwWenKai/* && git commit -m "更新 LxgwWenKai 字体至 ${lxgw_version}" || exit 0
+        git push -f
+
+    - name: Download `Source-Han-Serif`
+      run: |
+        mkdir -p ./tmp/Source-Han-Serif/
+        source_version=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | grep 'tag_name' | awk -F'"' '{print $4}')
+        echo "source_version=${source_version}" >> ${GITHUB_ENV}
+        rm -rf ./Source-Han-Serif/*
+        curl -o "./Source-Han-Serif/Source Han Serif SC Bold.otf" -L "${source_download_url}/SourceHanSerifSC-Bold.otf"
+        curl -o "./Source-Han-Serif/Source Han Serif SC Light.otf" -L "${source_download_url}/SourceHanSerifSC-Light.otf"
+        curl -o "./Source-Han-Serif/Source Han Serif SC.otf" -L "${source_download_url}/SourceHanSerifSC-Regular.otf"
+        rm -rf ./tmp*
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git add ./Source-Han-Serif/* && git commit -m "更新 Source Han Serif 字体至 v${source_version}" || exit 0
+        git push -f
+
+    - name: Zip `HarmonyOS Sans` and push
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/HarmonyOS-Sans.zip ./HarmonyOS-Sans/
+
+    - name: Zip `FiraCode-Nerd` and push
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/FiraCode-Nerd.zip ./FiraCode-Nerd/
+
+    - name: Zip `Sarasa-Gothic` and push
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/Sarasa-Gothic.zip ./Sarasa-Gothic/
+
+    - name: Zip `LxgwWenKai` and push
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/LxgwWenKai.zip ./LxgwWenKai/
+
+    - name: Zip `Source-Han-Serif` and push
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/Source-Han-Serif.zip ./Source-Han-Serif/
+
+    - name: Release and upload `fonts` assets
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        release_name: fonts
+        tag: fonts
+        overwrite: true
+        body: "包含 HarmonyOS Sans、FiraCode-Nerd、Sarasa-Gothic、LxgwWenKai 和 Source-Han-Serif 字体"
+        file_glob: true
+        file: ./fonts/*
+
+    - name: Commit and push `fonts` branch
+      run: |
+        cd ./fonts/ || exit 1
+        git init
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git checkout -b fonts
+        git add .
+        git commit -m "字体更新于 ${update_version}"
+        git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+        git push -f -u origin fonts
+
+    - name: Purge jsDelivr CDN
+      run: |
+        cd ./HarmonyOS-Sans/ || exit 1
+        for file in $(ls); do
+          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/HarmonyOS-Sans/${file}"
+        done
+        cd ../FiraCode-Nerd/ || exit 1
+        for file in $(ls); do
+          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/FiraCode-Nerd/${file}"
+        done
+        cd ../Sarasa-Gothic/ || exit 1
+        for file in $(ls); do
+          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/Sarasa-Gothic/${file}"
+        done
+        cd ../LxgwWenKai/ || exit 1
+        for file in $(ls); do
+          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/LxgwWenKai/${file}"
+        done
+        cd ../Source-Han-Serif/ || exit 1
+        for file in $(ls); do
+          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/Source-Han-Serif/${file}"
+        done
+        cd ../fonts/ || exit 1
+        for file in $(ls); do
+          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@main/fonts/${file}"
+        done
+
+    - name: Delete old workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        retain_days: 3
+        keep_minimum_runs: 1
