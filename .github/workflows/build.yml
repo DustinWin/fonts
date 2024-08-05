@@ -138,7 +138,7 @@ jobs:
         release_name: fonts
         tag: fonts
         overwrite: true
-        body: "包含 HarmonyOS Sans、FiraCode-Nerd、Sarasa-Gothic、LxgwWenKai 和 Source-Han-Serif 字体"
+        body: "包含 [HarmonyOS Sans](https://developer.huawei.com/consumer/cn/design/resource)、[FiraCode-Nerd](https://github.com/ryanoasis/nerd-fonts)、[Sarasa-Gothic](https://github.com/be5invis/Sarasa-Gothic)、[LxgwWenKai](https://github.com/lxgw/LxgwWenKai) 和 [Source-Han-Serif](https://github.com/adobe-fonts/source-han-serif) 字体"
         file_glob: true
         file: ./fonts/*
 
