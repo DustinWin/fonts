@@ -82,7 +82,7 @@ jobs:
         lxgw_version=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | grep 'tag_name' | sed -e 's/.*v/v/' -e 's/".*//')
         echo "lxgw_version=${lxgw_version}" >> ${GITHUB_ENV}
         rm -rf ./LxgwWenKai/*
-        curl -o "./LxgwWenKai/LXGW WenKai Bold.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Bold.ttf"
+        curl -o "./LxgwWenKai/LXGW WenKai Medium.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Medium.ttf"
         curl -o "./LxgwWenKai/LXGW WenKai Light.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Light.ttf"
         curl -o "./LxgwWenKai/LXGW WenKai.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Regular.ttf"
         rm -rf ./tmp*
