@@ -11,7 +11,7 @@
     <tr>
     <td>HarmonyOS Sans</td>
     <td><a href="https://developer.huawei.com/consumer/cn/design/resource">HarmonyOS Sans（鸿蒙字体）</a></td>
-    <td rowspan="3">粗体、细体和常规体</td>
+    <td rowspan="2">粗体、细体和常规体</td>
     <td rowspan="4">.ttf</td>
   </tr>
   <tr>
@@ -21,6 +21,7 @@
   <tr>
     <td>LxgwWenKai</td>
     <td><a href="https://github.com/lxgw/LxgwWenKai">霞鹜文楷</a></td>
+    <td>中粗体、细体和常规体</td>
   </tr>
   <tr>
     <td>Sarasa-Gothic</td>
