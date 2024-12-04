@@ -125,7 +125,7 @@ jobs:
         body: |
           更新 [HarmonyOS Sans](https://developer.huawei.com/consumer/cn/design/resource) 字体，发布于 ${{ env.harmonyossans_time }}
           更新 [FiraCode Nerd](https://github.com/ryanoasis/nerd-fonts) 字体至 ${{ env.firacode_version }}，发布于 ${{ env.firacode_time }}
-          更新 [Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic) 字体至 ${{ env.sarasa_version }}，发布于 ${{ env.sarasa_time }}
+          更新 [Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic) 字体至 v${{ env.sarasa_version }}，发布于 ${{ env.sarasa_time }}
           更新 [LxgwWenKai](https://github.com/lxgw/LxgwWenKai) 字体至 ${{ env.lxgw_version }}，发布于 ${{ env.lxgw_time }}
           更新 [Source Han Serif](https://github.com/adobe-fonts/source-han-serif) 字体至 ${{ env.source_version }}，发布于 ${{ env.source_time }}
         file_glob: true
