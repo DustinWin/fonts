@@ -1,0 +1,147 @@
+name: Download fonts
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 19 * * *"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/README.md"
+
+jobs:
+  Update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone Repository
+      uses: actions/checkout@main
+
+    - name: Set variables
+      run: |
+        echo "harmonyossans_download_url=https://developer.huawei.com/images/download/next" >> ${GITHUB_ENV}
+        echo "firacode_download_url=https://github.com/ryanoasis/nerd-fonts/releases/download" >> ${GITHUB_ENV}
+        echo "sarasa_download_url=https://github.com/be5invis/Sarasa-Gothic/releases/download" >> ${GITHUB_ENV}
+        echo "lxgw_download_url=https://github.com/lxgw/LxgwWenKai/releases/download" >> ${GITHUB_ENV}
+        echo "source_download_url=https://raw.githubusercontent.com/adobe-fonts/source-han-serif/release/OTF/SimplifiedChinese" >> ${GITHUB_ENV}
+      shell: bash
+
+    - name: Download `HarmonyOS Sans`
+      run: |
+        mkdir -p ./tmp/ ./HarmonyOS-Sans/ ./FiraCode-Nerd/ ./Sarasa-Gothic/ ./LxgwWenKai/ ./Source-Han-Serif/ ./fonts/
+        wget -P ./tmp/ "${harmonyossans_download_url}/HarmonyOS-Sans.zip"
+        unzip -o ./tmp/HarmonyOS-Sans.zip -d ./tmp/
+        harmonyossans_time=$(date -d "$(stat -c %y "./tmp/HarmonyOS Sans /HarmonyOS_Sans_SC/HarmonyOS_SansSC_Regular.ttf")" +"%Y-%m-%d")
+        echo "harmonyossans_time=$harmonyossans_time" >> ${GITHUB_ENV}
+        mv -f "./tmp/HarmonyOS Sans /HarmonyOS_Sans_SC/HarmonyOS_SansSC_Bold.ttf" "./HarmonyOS-Sans/HarmonyOS Sans SC Bold.ttf"
+        mv -f "./tmp/HarmonyOS Sans /HarmonyOS_Sans_SC/HarmonyOS_SansSC_Light.ttf" "./HarmonyOS-Sans/HarmonyOS Sans SC Light.ttf"
+        mv -f "./tmp/HarmonyOS Sans /HarmonyOS_Sans_SC/HarmonyOS_SansSC_Regular.ttf" "./HarmonyOS-Sans/HarmonyOS Sans SC.ttf"
+        rm -rf ./tmp*
+
+    - name: Download `FiraCode Nerd`
+      run: |
+        mkdir -p ./tmp/FiraCode-Nerd/
+        firacode_version=$(curl -sSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest | grep 'tag_name' | awk -F'"' '{print $4}')
+        echo "firacode_version=$firacode_version" >> ${GITHUB_ENV}
+        firacode_time=$(curl -sSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest | grep 'published_at' | awk -F'"' '{print $4}' | sed 's/T.*//')
+        echo "firacode_time=$firacode_time" >> ${GITHUB_ENV}
+        wget -P ./tmp/ "${firacode_download_url}/${firacode_version}/FiraCode.zip"
+        unzip -o ./tmp/FiraCode.zip -d ./tmp/FiraCode-Nerd/
+        mv -f ./tmp/FiraCode-Nerd/FiraCodeNerdFontMono-Bold.ttf "./FiraCode-Nerd/FiraCode Nerd Font Mono Bold.ttf"
+        mv -f ./tmp/FiraCode-Nerd/FiraCodeNerdFontMono-Light.ttf "./FiraCode-Nerd/FiraCode Nerd Font Mono Light.ttf"
+        mv -f ./tmp/FiraCode-Nerd/FiraCodeNerdFontMono-Regular.ttf "./FiraCode-Nerd/FiraCode Nerd Font Mono.ttf"
+        rm -rf ./tmp*
+
+    - name: Download `Sarasa Gothic`
+      run: |
+        mkdir -p ./tmp/Sarasa-Gothic/
+        sarasa_version=$(curl -sSL https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest | grep 'tag_name' | awk -F'"' '{print $4}' | sed 's/^v//')
+        echo "sarasa_version=$sarasa_version" >> ${GITHUB_ENV}
+        sarasa_time=$(curl -sSL https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest | grep 'published_at' | awk -F'"' '{print $4}' | sed 's/T.*//')
+        echo "sarasa_time=$sarasa_time" >> ${GITHUB_ENV}
+        wget -P ./tmp/ "${sarasa_download_url}/v${sarasa_version}/SarasaMonoSC-TTF-${sarasa_version}.7z"
+        7z x "./tmp/SarasaMonoSC-TTF-${sarasa_version}.7z" -otmp/Sarasa-Gothic/
+        mv -f ./tmp/Sarasa-Gothic/SarasaMonoSC-Bold.ttf "./Sarasa-Gothic/Sarasa Mono SC Bold.ttf"
+        mv -f ./tmp/Sarasa-Gothic/SarasaMonoSC-Italic.ttf "./Sarasa-Gothic/Sarasa Mono SC Italic.ttf"
+        mv -f ./tmp/Sarasa-Gothic/SarasaMonoSC-Light.ttf "./Sarasa-Gothic/Sarasa Mono SC Light.ttf"
+        mv -f ./tmp/Sarasa-Gothic/SarasaMonoSC-Regular.ttf "./Sarasa-Gothic/Sarasa Mono SC.ttf"
+        rm -rf ./tmp*
+
+    - name: Download `LxgwWenKai`
+      run: |
+        mkdir -p ./tmp/LxgwWenKai/
+        lxgw_version=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | grep 'tag_name' | awk -F'"' '{print $4}')
+        echo "lxgw_version=$lxgw_version" >> ${GITHUB_ENV}
+        lxgw_time=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | grep 'published_at' | awk -F'"' '{print $4}' | sed 's/T.*//')
+        echo "lxgw_time=$lxgw_time" >> ${GITHUB_ENV}
+        curl -o "./LxgwWenKai/LXGW WenKai Medium.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Medium.ttf"
+        curl -o "./LxgwWenKai/LXGW WenKai Light.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Light.ttf"
+        curl -o "./LxgwWenKai/LXGW WenKai.ttf" -L "${lxgw_download_url}/${lxgw_version}/LXGWWenKai-Regular.ttf"
+        rm -rf ./tmp*
+
+    - name: Download `Source Han Serif`
+      run: |
+        mkdir -p ./tmp/Source-Han-Serif/
+        source_version=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | grep 'tag_name' | awk -F'"' '{print $4}' | sed 's/^/v/')
+        echo "source_version=$source_version" >> ${GITHUB_ENV}
+        source_time=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | grep 'published_at' | awk -F'"' '{print $4}' | sed 's/T.*//')
+        echo "source_time=$source_time" >> ${GITHUB_ENV}
+        curl -o "./Source-Han-Serif/Source Han Serif SC Bold.otf" -L "${source_download_url}/SourceHanSerifSC-Bold.otf"
+        curl -o "./Source-Han-Serif/Source Han Serif SC Light.otf" -L "${source_download_url}/SourceHanSerifSC-Light.otf"
+        curl -o "./Source-Han-Serif/Source Han Serif SC.otf" -L "${source_download_url}/SourceHanSerifSC-Regular.otf"
+        rm -rf ./tmp*
+
+    - name: Zip `HarmonyOS Sans`
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/HarmonyOS-Sans.zip ./HarmonyOS-Sans/
+
+    - name: Zip `FiraCode Nerd`
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/FiraCode-Nerd.zip ./FiraCode-Nerd/
+
+    - name: Zip `Sarasa Gothic`
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/Sarasa-Gothic.zip ./Sarasa-Gothic/
+
+    - name: Zip `LxgwWenKai`
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/LxgwWenKai.zip ./LxgwWenKai/
+
+    - name: Zip `Source Han Serif`
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/Source-Han-Serif.zip ./Source-Han-Serif/
+
+    - name: Release and upload `fonts` assets
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        release_name: fonts
+        tag: fonts
+        overwrite: true
+        body: |
+          更新 [HarmonyOS Sans](https://developer.huawei.com/consumer/cn/design/resource) 字体，发布于 ${{ env.harmonyossans_time }}
+          更新 [FiraCode Nerd](https://github.com/ryanoasis/nerd-fonts) 字体至 ${{ env.firacode_version }}，发布于 ${{ env.firacode_time }}
+          更新 [Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic) 字体至 v${{ env.sarasa_version }}，发布于 ${{ env.sarasa_time }}
+          更新 [LxgwWenKai](https://github.com/lxgw/LxgwWenKai) 字体至 ${{ env.lxgw_version }}，发布于 ${{ env.lxgw_time }}
+          更新 [Source Han Serif](https://github.com/adobe-fonts/source-han-serif) 字体至 ${{ env.source_version }}，发布于 ${{ env.source_time }}
+        file_glob: true
+        file: ./fonts/*
+
+    - name: Purge jsDelivr CDN
+      run: |
+        cd ./fonts/ || exit 1
+        for file in $(ls); do
+          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@fonts/${file}"
+        done
+
+    - name: Delete old workflow runs
+      uses: Mattraks/delete-workflow-runs@v2
+      with:
+        token: ${{ github.token }}
+        repository: ${{ github.repository }}
+        retain_days: 3
+        keep_minimum_runs: 1
