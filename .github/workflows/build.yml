@@ -19,8 +19,7 @@ jobs:
     - name: Set variables
       run: |
         echo "misans_download_url=https://hyperos.mi.com/font-download/MiSans.zip" >> ${GITHUB_ENV}
-        echo "firacode_download_url=https://github.com/ryanoasis/nerd-fonts/releases/download" >> ${GITHUB_ENV}
-        echo "sarasa_download_url=https://github.com/be5invis/Sarasa-Gothic/releases/download" >> ${GITHUB_ENV}
+        echo "maple_download_url=https://github.com/subframe7536/maple-font/releases/download" >> ${GITHUB_ENV}
         echo "lxgw_download_url=https://github.com/lxgw/LxgwWenKai/releases/download" >> ${GITHUB_ENV}
         echo "source_download_url=https://github.com/adobe-fonts/source-han-serif/releases/download" >> ${GITHUB_ENV}
         echo "noto_download_url=https://raw.githubusercontent.com/googlefonts/noto-emoji/main/fonts/NotoColorEmoji_WindowsCompatible.ttf" >> ${GITHUB_ENV}
@@ -36,28 +35,16 @@ jobs:
         cp -f ./tmp/MiSans/otf/MiSans-* ./MiSans/
         rm -rf ./tmp*
 
-    - name: Download `FiraCode Nerd`
+    - name: Download `Maple Mono NF CN`
       run: |
-        mkdir -p ./tmp/FiraCode-Nerd/ ./FiraCode-Nerd/
-        firacode_version=$(curl -sSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest | jq -r '.tag_name')
-        echo "firacode_version=$firacode_version" >> ${GITHUB_ENV}
-        firacode_time=$(curl -sSL https://api.github.com/repos/ryanoasis/nerd-fonts/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
-        echo "firacode_time=$firacode_time" >> ${GITHUB_ENV}
-        wget -P ./tmp/ "${firacode_download_url}/${firacode_version}/FiraCode.zip"
-        unzip -o ./tmp/FiraCode.zip -d ./tmp/FiraCode-Nerd/
-        cp -f ./tmp/FiraCode-Nerd/FiraCodeNerdFontMono-* ./FiraCode-Nerd/
-        rm -rf ./tmp*
-
-    - name: Download `Sarasa Gothic`
-      run: |
-        mkdir -p ./tmp/Sarasa-Gothic/ ./Sarasa-Gothic/
-        sarasa_version=$(curl -sSL https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-        echo "sarasa_version=$sarasa_version" >> ${GITHUB_ENV}
-        sarasa_time=$(curl -sSL https://api.github.com/repos/be5invis/Sarasa-Gothic/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
-        echo "sarasa_time=$sarasa_time" >> ${GITHUB_ENV}
-        wget -P ./tmp/ "${sarasa_download_url}/v${sarasa_version}/SarasaMonoSC-TTF-${sarasa_version}.7z"
-        7z x "./tmp/SarasaMonoSC-TTF-${sarasa_version}.7z" -otmp/Sarasa-Gothic/
-        cp -f ./tmp/Sarasa-Gothic/SarasaMonoSC-* ./Sarasa-Gothic/
+        mkdir -p ./tmp/Maple-Mono-NF-CN/ ./Maple-Mono-NF-CN/
+        maple_version=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.tag_name')
+        echo "maple_version=$maple_version" >> ${GITHUB_ENV}
+        maple_time=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
+        echo "maple_time=$maple_time" >> ${GITHUB_ENV}
+        wget -P ./tmp/ "${maple_download_url}/${maple_version}/MapleMono-NF-CN-unhinted.zip"
+        unzip -o ./tmp/MapleMono-NF-CN-unhinted.zip -d ./tmp/Maple-Mono-NF-CN/
+        cp -f ./tmp/Maple-Mono-NF-CN/MapleMono-NF-CN-* ./Maple-Mono-NF-CN/
         rm -rf ./tmp*
 
     - name: Download `LxgwWenKai`
@@ -99,15 +86,10 @@ jobs:
       with:
         args: zip -qq -r ./fonts/MiSans.zip ./MiSans/
 
-    - name: Zip `FiraCode Nerd`
+    - name: Zip `Maple Mono NF CN`
       uses: montudor/action-zip@v1
       with:
-        args: zip -qq -r ./fonts/FiraCode-Nerd.zip ./FiraCode-Nerd/
-
-    - name: Zip `Sarasa Gothic`
-      uses: montudor/action-zip@v1
-      with:
-        args: zip -qq -r ./fonts/Sarasa-Gothic.zip ./Sarasa-Gothic/
+        args: zip -qq -r ./fonts/Maple-Mono-NF-CN.zip ./Maple-Mono-NF-CN/
 
     - name: Zip `LxgwWenKai`
       uses: montudor/action-zip@v1
@@ -118,7 +100,6 @@ jobs:
       uses: montudor/action-zip@v1
       with:
         args: zip -qq -r ./fonts/Source-Han-Serif.zip ./Source-Han-Serif/
-
 
     - name: Zip `Noto Color Emoji`
       uses: montudor/action-zip@v1
@@ -134,8 +115,7 @@ jobs:
         overwrite: true
         body: |
           更新 [MiSans](https://hyperos.mi.com/font) 字体，发布于 ${{ env.misans_time }}
-          更新 [FiraCode Nerd](https://github.com/ryanoasis/nerd-fonts) 字体至 ${{ env.firacode_version }}，发布于 ${{ env.firacode_time }}
-          更新 [Sarasa Gothic](https://github.com/be5invis/Sarasa-Gothic) 字体至 v${{ env.sarasa_version }}，发布于 ${{ env.sarasa_time }}
+          更新 [Maple Mono NF CN](https://github.com/subframe7536/maple-font) 字体至 ${{ env.maple_version }}，发布于 ${{ env.maple_time }}
           更新 [LxgwWenKai](https://github.com/lxgw/LxgwWenKai) 字体至 ${{ env.lxgw_version }}，发布于 ${{ env.lxgw_time }}
           更新 [Source Han Serif](https://github.com/adobe-fonts/source-han-serif) 字体至 v${{ env.source_version }}，发布于 ${{ env.source_time }}
           更新 [Noto Color Emoji](https://github.com/googlefonts/noto-emoji) 字体至 v${{ env.noto_version }}，发布于 ${{ env.noto_time }}
