@@ -16,9 +16,13 @@ jobs:
     - name: Clone Repository
       uses: actions/checkout@main
 
+    - name: Install p7zip
+      run: sudo apt-get update && sudo apt-get install -y p7zip
+
     - name: Set variables
       run: |
         echo "misans_download_url=https://hyperos.mi.com/font-download/MiSans.zip" >> ${GITHUB_ENV}
+        echo "resource_download_url=https://github.com/CyanoHao/Resource-Han-Rounded/releases/download" >> ${GITHUB_ENV}
         echo "maple_download_url=https://github.com/subframe7536/maple-font/releases/download" >> ${GITHUB_ENV}
         echo "lxgw_download_url=https://github.com/lxgw/LxgwWenKai/releases/download" >> ${GITHUB_ENV}
         echo "source_download_url=https://github.com/adobe-fonts/source-han-serif/releases/download" >> ${GITHUB_ENV}
@@ -33,6 +37,18 @@ jobs:
         misans_time=$(date -d "$(stat -c %y "./tmp/MiSans/otf/MiSans-Regular.otf")" +"%Y-%m-%d")
         echo "misans_time=$misans_time" >> ${GITHUB_ENV}
         cp -f ./tmp/MiSans/otf/MiSans-* ./MiSans/
+        rm -rf ./tmp*
+
+    - name: Download `Resource Han Rounded CN`
+      run: |
+        mkdir -p ./tmp/Resource-Han-Rounded-CN/ ./Resource-Han-Rounded-CN/
+        resource_version=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+        echo "resource_version=$resource_version" >> ${GITHUB_ENV}
+        resource_time=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
+        echo "resource_time=$resource_time" >> ${GITHUB_ENV}
+        wget -P ./tmp/ "${resource_download_url}/v${resource_version}/RHR-CN-${resource_version}.7z"
+        7z x ./tmp/RHR-CN-${resource_version}.7z -o./tmp/Resource-Han-Rounded-CN/
+        cp -f ./tmp/Resource-Han-Rounded-CN/ResourceHanRoundedCN-* ./Resource-Han-Rounded-CN/
         rm -rf ./tmp*
 
     - name: Download `Maple Mono NF CN`
@@ -74,9 +90,9 @@ jobs:
     - name: Download `Noto Color Emoji`
       run: |
         mkdir -p ./Noto-Color-Emoji/
-        noto_version=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | grep 'fontRevision' | awk -F'"' '{print $2}')
+        noto_version=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | grep 'noto-emoji' | awk -F '[ ;]+' '{print $3}')
         echo "noto_version=$noto_version" >> ${GITHUB_ENV}
-        noto_time=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | grep 'created' | awk -F'"' '{print $2}' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
+        noto_time=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | grep 'noto-emoji' | awk -F ':' '{print $2}' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
         echo "noto_time=$noto_time" >> ${GITHUB_ENV}
         wget -P ./Noto-Color-Emoji/ "${noto_download_url}"
 
@@ -85,6 +101,11 @@ jobs:
       uses: montudor/action-zip@v1
       with:
         args: zip -qq -r ./fonts/MiSans.zip ./MiSans/
+
+    - name: Zip `Resource Han Rounded CN`
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r ./fonts/Resource-Han-Rounded-CN.zip ./Resource-Han-Rounded-CN/
 
     - name: Zip `Maple Mono NF CN`
       uses: montudor/action-zip@v1
@@ -115,6 +136,7 @@ jobs:
         overwrite: true
         body: |
           更新 [MiSans](https://hyperos.mi.com/font) 字体，发布于 ${{ env.misans_time }}
+          更新 [Resource Han Rounded CN](https://github.com/CyanoHao/Resource-Han-Rounded) 字体至 v${{ env.resource_version }}，发布于 ${{ env.resource_time }}
           更新 [Maple Mono NF CN](https://github.com/subframe7536/maple-font) 字体至 ${{ env.maple_version }}，发布于 ${{ env.maple_time }}
           更新 [LxgwWenKai](https://github.com/lxgw/LxgwWenKai) 字体至 ${{ env.lxgw_version }}，发布于 ${{ env.lxgw_time }}
           更新 [Source Han Serif](https://github.com/adobe-fonts/source-han-serif) 字体至 v${{ env.source_version }}，发布于 ${{ env.source_time }}
