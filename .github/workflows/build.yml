@@ -14,10 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Repository
-      uses: actions/checkout@main
+      uses: actions/checkout@v5
 
-    - name: Install p7zip
-      run: sudo apt-get update && sudo apt-get install -y p7zip
+    - name: Install tools (otfinfo & p7zip)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lcdf-typetools
+        sudo apt-get install -y p7zip
 
     - name: Set variables
       run: |
@@ -27,107 +30,148 @@ jobs:
         echo "lxgw_download_url=https://github.com/lxgw/LxgwWenKai/releases/download" >> ${GITHUB_ENV}
         echo "source_download_url=https://github.com/adobe-fonts/source-han-serif/releases/download" >> ${GITHUB_ENV}
         echo "noto_download_url=https://raw.githubusercontent.com/googlefonts/noto-emoji/main/fonts/NotoColorEmoji_WindowsCompatible.ttf" >> ${GITHUB_ENV}
+        echo "resource_version=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.tag_name' | sed 's/^v//')" >> ${GITHUB_ENV}
+        echo "resource_time=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "maple_version=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
+        echo "maple_time=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "lxgw_version=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
+        echo "lxgw_time=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "source_version=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
+        echo "source_time=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "noto_version=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | perl -ne '/Version\s+([^;]+).*noto-emoji/ && print "$1\n"')" >> ${GITHUB_ENV}
+        echo "noto_time=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | perl -ne '/noto-emoji:([^:]+)/ && print "$1\n"' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
       shell: bash
 
-    - name: Download `MiSans`
+    - name: Get `MiSans` version and time
       run: |
-        mkdir -p ./tmp/ ./MiSans/ ./fonts/
-        wget -P ./tmp/ "${misans_download_url}"
-        unzip -o ./tmp/MiSans.zip -d ./tmp/
-        misans_time=$(date -d "$(stat -c %y "./tmp/MiSans/otf/MiSans-Regular.otf")" +"%Y-%m-%d")
-        echo "misans_time=$misans_time" >> ${GITHUB_ENV}
-        cp -f ./tmp/MiSans/otf/MiSans-* ./MiSans/
-        rm -rf ./tmp*
+        mkdir -p ./tmp-misans/
+        wget -P ./tmp-misans/ "${misans_download_url}"
+        unzip -o ./tmp-misans/MiSans.zip -d ./tmp-misans/
+        echo "misans_version=$(otfinfo -v ./tmp-misans/MiSans/otf/MiSans-Regular.otf | awk '{print "v"$2}' | cut -d';' -f1)" >> ${GITHUB_ENV}
+        echo "misans_time=$(date -d "$(stat -c %y ./tmp-misans/MiSans/otf/MiSans-Regular.otf)" +"%Y-%m-%d")" >> ${GITHUB_ENV}
+
+    - name: Compare `fonts` versions with current release
+      run: |
+        current_body=$(curl -sSL "https://api.github.com/repos/${{ github.repository }}/releases/tags/fonts" | jq -r '.body // ""')
+        fonts=(
+          "MiSans|${misans_version}|${misans_time}"
+          "Resource Han Rounded CN|v${resource_version}|${resource_time}"
+          "Maple Mono NF CN|${maple_version}|${maple_time}"
+          "LxgwWenKai|${lxgw_version}|${lxgw_time}"
+          "Source Han Serif|v${source_version}|${source_time}"
+          "Noto Color Emoji|v${noto_version}|${noto_time}"
+        )
+        for font in "${fonts[@]}"; do
+          IFS="|" read -r name version time <<< "${font}"
+          var_name="${name// /_}_skip_release"
+          if echo "$current_body" | grep -q "${name}.*${version}.*${time}"; then
+            echo "当前 ${name} 字体已是最新版本 ${version}，无需更新"
+            eval "${var_name}=true"
+          else
+            echo "当前 ${name} 字体版本较低，需要更新最新版本至 ${version}"
+            eval "${var_name}=false"
+          fi
+          eval "value=\$${var_name}"
+          echo "${var_name}=${value}" >> ${GITHUB_ENV}
+        done
+
+    - name: Download `MiSans`
+      if: ${{ env.MiSans_skip_release != 'true' }}
+      run: |
+        mkdir -p ./MiSans/ ./fonts/
+        mv -f ./tmp-misans/MiSans/otf/MiSans-* ./MiSans/
+        rm -rf ./tmp-misans*
 
     - name: Download `Resource Han Rounded CN`
+      if: ${{ env.Resource_Han_Rounded_CN_skip_release != 'true' }}
       run: |
-        mkdir -p ./tmp/Resource-Han-Rounded-CN/ ./Resource-Han-Rounded-CN/
-        resource_version=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-        echo "resource_version=$resource_version" >> ${GITHUB_ENV}
-        resource_time=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
-        echo "resource_time=$resource_time" >> ${GITHUB_ENV}
-        wget -P ./tmp/ "${resource_download_url}/v${resource_version}/RHR-CN-${resource_version}.7z"
-        7z x ./tmp/RHR-CN-${resource_version}.7z -o./tmp/Resource-Han-Rounded-CN/
-        cp -f ./tmp/Resource-Han-Rounded-CN/ResourceHanRoundedCN-* ./Resource-Han-Rounded-CN/
-        rm -rf ./tmp*
+        mkdir -p ./tmp-resource/Resource-Han-Rounded-CN/ ./Resource-Han-Rounded-CN/ ./fonts/
+        wget -P ./tmp-resource/ "${resource_download_url}/v${resource_version}/RHR-CN-${resource_version}.7z"
+        7z x ./tmp-resource/RHR-CN-${resource_version}.7z -o./tmp-resource/Resource-Han-Rounded-CN/
+        mv -f ./tmp-resource/Resource-Han-Rounded-CN/ResourceHanRoundedCN-* ./Resource-Han-Rounded-CN/
+        rm -rf ./tmp-resource*
 
     - name: Download `Maple Mono NF CN`
+      if: ${{ env.Maple_Mono_NF_CN_skip_release != 'true' }}
       run: |
-        mkdir -p ./tmp/Maple-Mono-NF-CN/ ./Maple-Mono-NF-CN/
-        maple_version=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.tag_name')
-        echo "maple_version=$maple_version" >> ${GITHUB_ENV}
-        maple_time=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
-        echo "maple_time=$maple_time" >> ${GITHUB_ENV}
-        wget -P ./tmp/ "${maple_download_url}/${maple_version}/MapleMono-NF-CN-unhinted.zip"
-        unzip -o ./tmp/MapleMono-NF-CN-unhinted.zip -d ./tmp/Maple-Mono-NF-CN/
-        cp -f ./tmp/Maple-Mono-NF-CN/MapleMono-NF-CN-* ./Maple-Mono-NF-CN/
-        rm -rf ./tmp*
+        mkdir -p ./tmp-maple/Maple-Mono-NF-CN/ ./Maple-Mono-NF-CN/ ./fonts/
+        wget -P ./tmp-maple/ "${maple_download_url}/${maple_version}/MapleMono-NF-CN-unhinted.zip"
+        unzip -o ./tmp-maple/MapleMono-NF-CN-unhinted.zip -d ./tmp-maple/Maple-Mono-NF-CN/
+        mv -f ./tmp-maple/Maple-Mono-NF-CN/MapleMono-NF-CN-* ./Maple-Mono-NF-CN/
+        rm -rf ./tmp-maple*
 
     - name: Download `LxgwWenKai`
+      if: ${{ env.LxgwWenKai_skip_release != 'true' }}
       run: |
-        mkdir -p ./tmp/LxgwWenKai/ ./LxgwWenKai/
-        lxgw_version=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.tag_name')
-        echo "lxgw_version=$lxgw_version" >> ${GITHUB_ENV}
-        lxgw_time=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
-        echo "lxgw_time=$lxgw_time" >> ${GITHUB_ENV}
-        wget -P ./tmp/ "${lxgw_download_url}/${lxgw_version}/lxgw-wenkai-${lxgw_version}.zip"
-        unzip -o "./tmp/lxgw-wenkai-${lxgw_version}.zip" -d ./tmp/
-        cp -f ./tmp/lxgw-wenkai-${lxgw_version}/LXGWWenKai-* ./LxgwWenKai/
-        rm -rf ./tmp*
+        mkdir -p ./tmp-lxgw/LxgwWenKai/ ./LxgwWenKai/ ./fonts/
+        wget -P ./tmp-lxgw/ "${lxgw_download_url}/${lxgw_version}/lxgw-wenkai-${lxgw_version}.zip"
+        unzip -o "./tmp-lxgw/lxgw-wenkai-${lxgw_version}.zip" -d ./tmp-lxgw/
+        mv -f ./tmp-lxgw/lxgw-wenkai-${lxgw_version}/LXGWWenKai-* ./LxgwWenKai/
+        rm -rf ./tmp-lxgw*
 
     - name: Download `Source Han Serif`
+      if: ${{ env.Source_Han_Serif_skip_release != 'true' }}
       run: |
-        mkdir -p ./tmp/Source-Han-Serif/ ./Source-Han-Serif/
-        source_version=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.tag_name')
-        echo "source_version=$source_version" >> ${GITHUB_ENV}
-        source_time=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
-        echo "source_time=$source_time" >> ${GITHUB_ENV}
-        wget -P ./tmp/ "${source_download_url}/${source_version}/09_SourceHanSerifSC.zip"
-        unzip -o ./tmp/09_SourceHanSerifSC.zip -d ./tmp/
-        cp -f ./tmp/OTF/SimplifiedChinese/SourceHanSerifSC-* ./Source-Han-Serif/
-        rm -rf ./tmp*
+        mkdir -p ./tmp-source/Source-Han-Serif/ ./Source-Han-Serif/ ./fonts/
+        wget -P ./tmp-source/ "${source_download_url}/${source_version}/09_SourceHanSerifSC.zip"
+        unzip -o ./tmp-source/09_SourceHanSerifSC.zip -d ./tmp-source/
+        mv -f ./tmp-source/OTF/SimplifiedChinese/SourceHanSerifSC-* ./Source-Han-Serif/
+        rm -rf ./tmp-source*
 
     - name: Download `Noto Color Emoji`
+      if: ${{ env.Noto_Color_Emoji_skip_release != 'true' }}
       run: |
-        mkdir -p ./Noto-Color-Emoji/
-        noto_version=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | grep 'noto-emoji' | awk -F '[ ;]+' '{print $3}')
-        echo "noto_version=$noto_version" >> ${GITHUB_ENV}
-        noto_time=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | grep 'noto-emoji' | awk -F ':' '{print $2}' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')
-        echo "noto_time=$noto_time" >> ${GITHUB_ENV}
+        mkdir -p ./Noto-Color-Emoji/ ./fonts/
         wget -P ./Noto-Color-Emoji/ "${noto_download_url}"
 
-
     - name: Zip `MiSans`
+      if: ${{ env.MiSans_skip_release != 'true' }}
       uses: montudor/action-zip@v1
       with:
         args: zip -qq -r ./fonts/MiSans.zip ./MiSans/
 
     - name: Zip `Resource Han Rounded CN`
+      if: ${{ env.Resource_Han_Rounded_CN_skip_release != 'true' }}
       uses: montudor/action-zip@v1
       with:
         args: zip -qq -r ./fonts/Resource-Han-Rounded-CN.zip ./Resource-Han-Rounded-CN/
 
     - name: Zip `Maple Mono NF CN`
+      if: ${{ env.Maple_Mono_NF_CN_skip_release != 'true' }}
       uses: montudor/action-zip@v1
       with:
         args: zip -qq -r ./fonts/Maple-Mono-NF-CN.zip ./Maple-Mono-NF-CN/
 
     - name: Zip `LxgwWenKai`
+      if: ${{ env.LxgwWenKai_skip_release != 'true' }}
       uses: montudor/action-zip@v1
       with:
         args: zip -qq -r ./fonts/LxgwWenKai.zip ./LxgwWenKai/
 
     - name: Zip `Source Han Serif`
+      if: ${{ env.Source_Han_Serif_skip_release != 'true' }}
       uses: montudor/action-zip@v1
       with:
         args: zip -qq -r ./fonts/Source-Han-Serif.zip ./Source-Han-Serif/
 
     - name: Zip `Noto Color Emoji`
+      if: ${{ env.Noto_Color_Emoji_skip_release != 'true' }}
       uses: montudor/action-zip@v1
       with:
         args: zip -qq -r ./fonts/Noto-Color-Emoji.zip ./Noto-Color-Emoji/
 
+    - name: Check if `fonts` files exist
+      run: |
+        if ls ./fonts/*.zip >/dev/null 2>&1; then
+          echo "fonts 文件夹内存在新字体文件，需要上传"
+          echo "fonts_exist=true" >> ${GITHUB_ENV}
+        else
+          echo "fonts 文件夹内没有新字体文件，无需上传"
+          echo "fonts_exist=false" >> ${GITHUB_ENV}
+        fi
+
     - name: Release and upload `fonts` assets
+      if: ${{ env.fonts_exist == 'true' }}
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -135,14 +179,14 @@ jobs:
         tag: fonts
         overwrite: true
         body: |
-          更新 [MiSans](https://hyperos.mi.com/font) 字体，发布于 ${{ env.misans_time }}
+          更新 [MiSans](https://hyperos.mi.com/font) 字体至 ${{ env.misans_version }}，发布于 ${{ env.misans_time }}
           更新 [Resource Han Rounded CN](https://github.com/CyanoHao/Resource-Han-Rounded) 字体至 v${{ env.resource_version }}，发布于 ${{ env.resource_time }}
           更新 [Maple Mono NF CN](https://github.com/subframe7536/maple-font) 字体至 ${{ env.maple_version }}，发布于 ${{ env.maple_time }}
           更新 [LxgwWenKai](https://github.com/lxgw/LxgwWenKai) 字体至 ${{ env.lxgw_version }}，发布于 ${{ env.lxgw_time }}
           更新 [Source Han Serif](https://github.com/adobe-fonts/source-han-serif) 字体至 v${{ env.source_version }}，发布于 ${{ env.source_time }}
           更新 [Noto Color Emoji](https://github.com/googlefonts/noto-emoji) 字体至 v${{ env.noto_version }}，发布于 ${{ env.noto_time }}
         file_glob: true
-        file: ./fonts/*
+        file: ./fonts/*.zip
 
     - name: Delete old workflow runs
       uses: Mattraks/delete-workflow-runs@v2
