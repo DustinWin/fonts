@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Install tools (otfinfo & p7zip)
       run: |
@@ -31,13 +31,13 @@ jobs:
         echo "source_download_url=https://github.com/adobe-fonts/source-han-serif/releases/download" >> ${GITHUB_ENV}
         echo "noto_download_url=https://raw.githubusercontent.com/googlefonts/noto-emoji/main/fonts/NotoColorEmoji_WindowsCompatible.ttf" >> ${GITHUB_ENV}
         echo "resource_version=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.tag_name' | sed 's/^v//')" >> ${GITHUB_ENV}
-        echo "resource_time=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "resource_time=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.published_at // .created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
         echo "maple_version=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
-        echo "maple_time=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "maple_time=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.published_at // .created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
         echo "lxgw_version=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
-        echo "lxgw_time=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "lxgw_time=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.published_at // .created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
         echo "source_version=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
-        echo "source_time=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "source_time=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.published_at // .created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
         echo "noto_version=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | perl -ne '/Version\s+([^;]+).*noto-emoji/ && print "$1\n"')" >> ${GITHUB_ENV}
         echo "noto_time=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | perl -ne '/noto-emoji:([^:]+)/ && print "$1\n"' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
       shell: bash
