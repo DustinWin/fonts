@@ -9,12 +9,16 @@ on:
     paths-ignore:
       - "**/README.md"
 
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   Update:
     runs-on: ubuntu-latest
     steps:
     - name: Clone Repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Install tools (otfinfo & p7zip)
       run: |
@@ -31,13 +35,13 @@ jobs:
         echo "source_download_url=https://github.com/adobe-fonts/source-han-serif/releases/download" >> ${GITHUB_ENV}
         echo "noto_download_url=https://raw.githubusercontent.com/googlefonts/noto-emoji/main/fonts/NotoColorEmoji_WindowsCompatible.ttf" >> ${GITHUB_ENV}
         echo "resource_version=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.tag_name' | sed 's/^v//')" >> ${GITHUB_ENV}
-        echo "resource_time=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "resource_time=$(curl -sSL https://api.github.com/repos/CyanoHao/Resource-Han-Rounded/releases/latest | jq -r '.published_at // .created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
         echo "maple_version=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
-        echo "maple_time=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "maple_time=$(curl -sSL https://api.github.com/repos/subframe7536/maple-font/releases/latest | jq -r '.published_at // .created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
         echo "lxgw_version=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
-        echo "lxgw_time=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "lxgw_time=$(curl -sSL https://api.github.com/repos/lxgw/LxgwWenKai/releases/latest | jq -r '.published_at // .created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
         echo "source_version=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.tag_name')" >> ${GITHUB_ENV}
-        echo "source_time=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
+        echo "source_time=$(curl -sSL https://api.github.com/repos/adobe-fonts/source-han-serif/releases/latest | jq -r '.published_at // .created_at' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
         echo "noto_version=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | perl -ne '/Version\s+([^;]+).*noto-emoji/ && print "$1\n"')" >> ${GITHUB_ENV}
         echo "noto_time=$(curl -sSL https://raw.githubusercontent.com/googlefonts/noto-emoji/main/NotoColorEmoji.tmpl.ttx.tmpl | perl -ne '/noto-emoji:([^:]+)/ && print "$1\n"' | xargs -I {} date -d '{} +8 hours' '+%Y-%m-%d')" >> ${GITHUB_ENV}
       shell: bash
@@ -45,8 +49,8 @@ jobs:
     - name: Get `MiSans` version and time
       run: |
         mkdir -p ./tmp-misans/
-        wget -P ./tmp-misans/ "${misans_download_url}"
-        unzip -o ./tmp-misans/MiSans.zip -d ./tmp-misans/
+        wget -q -P ./tmp-misans/ "${misans_download_url}"
+        unzip -q -o ./tmp-misans/MiSans.zip -d ./tmp-misans/
         echo "misans_version=$(otfinfo -v ./tmp-misans/MiSans/otf/MiSans-Regular.otf | awk '{print "v"$2}' | cut -d';' -f1)" >> ${GITHUB_ENV}
         echo "misans_time=$(date -d "$(stat -c %y ./tmp-misans/MiSans/otf/MiSans-Regular.otf)" +"%Y-%m-%d")" >> ${GITHUB_ENV}
 
@@ -86,8 +90,8 @@ jobs:
       if: ${{ env.Resource_Han_Rounded_CN_skip_release != 'true' }}
       run: |
         mkdir -p ./tmp-resource/Resource-Han-Rounded-CN/ ./Resource-Han-Rounded-CN/ ./fonts/
-        wget -P ./tmp-resource/ "${resource_download_url}/v${resource_version}/RHR-CN-${resource_version}.7z"
-        7z x ./tmp-resource/RHR-CN-${resource_version}.7z -o./tmp-resource/Resource-Han-Rounded-CN/
+        wget -q -P ./tmp-resource/ "${resource_download_url}/v${resource_version}/RHR-CN-${resource_version}.7z"
+        7z x ./tmp-resource/RHR-CN-${resource_version}.7z -o./tmp-resource/Resource-Han-Rounded-CN/ -bso0 -bsp0
         mv -f ./tmp-resource/Resource-Han-Rounded-CN/ResourceHanRoundedCN-* ./Resource-Han-Rounded-CN/
         rm -rf ./tmp-resource*
 
@@ -95,8 +99,8 @@ jobs:
       if: ${{ env.Maple_Mono_NF_CN_skip_release != 'true' }}
       run: |
         mkdir -p ./tmp-maple/Maple-Mono-NF-CN/ ./Maple-Mono-NF-CN/ ./fonts/
-        wget -P ./tmp-maple/ "${maple_download_url}/${maple_version}/MapleMono-NF-CN-unhinted.zip"
-        unzip -o ./tmp-maple/MapleMono-NF-CN-unhinted.zip -d ./tmp-maple/Maple-Mono-NF-CN/
+        wget -q -P ./tmp-maple/ "${maple_download_url}/${maple_version}/MapleMono-NF-CN-unhinted.zip"
+        unzip -q -o ./tmp-maple/MapleMono-NF-CN-unhinted.zip -d ./tmp-maple/Maple-Mono-NF-CN/
         mv -f ./tmp-maple/Maple-Mono-NF-CN/MapleMono-NF-CN-* ./Maple-Mono-NF-CN/
         rm -rf ./tmp-maple*
 
@@ -104,8 +108,8 @@ jobs:
       if: ${{ env.LxgwWenKai_skip_release != 'true' }}
       run: |
         mkdir -p ./tmp-lxgw/LxgwWenKai/ ./LxgwWenKai/ ./fonts/
-        wget -P ./tmp-lxgw/ "${lxgw_download_url}/${lxgw_version}/lxgw-wenkai-${lxgw_version}.zip"
-        unzip -o "./tmp-lxgw/lxgw-wenkai-${lxgw_version}.zip" -d ./tmp-lxgw/
+        wget -q -P ./tmp-lxgw/ "${lxgw_download_url}/${lxgw_version}/lxgw-wenkai-${lxgw_version}.zip"
+        unzip -q -o "./tmp-lxgw/lxgw-wenkai-${lxgw_version}.zip" -d ./tmp-lxgw/
         mv -f ./tmp-lxgw/lxgw-wenkai-${lxgw_version}/LXGWWenKai-* ./LxgwWenKai/
         rm -rf ./tmp-lxgw*
 
@@ -113,8 +117,8 @@ jobs:
       if: ${{ env.Source_Han_Serif_skip_release != 'true' }}
       run: |
         mkdir -p ./tmp-source/Source-Han-Serif/ ./Source-Han-Serif/ ./fonts/
-        wget -P ./tmp-source/ "${source_download_url}/${source_version}/09_SourceHanSerifSC.zip"
-        unzip -o ./tmp-source/09_SourceHanSerifSC.zip -d ./tmp-source/
+        wget -q -P ./tmp-source/ "${source_download_url}/${source_version}/09_SourceHanSerifSC.zip"
+        unzip -q -o ./tmp-source/09_SourceHanSerifSC.zip -d ./tmp-source/
         mv -f ./tmp-source/OTF/SimplifiedChinese/SourceHanSerifSC-* ./Source-Han-Serif/
         rm -rf ./tmp-source*
 
@@ -122,7 +126,7 @@ jobs:
       if: ${{ env.Noto_Color_Emoji_skip_release != 'true' }}
       run: |
         mkdir -p ./Noto-Color-Emoji/ ./fonts/
-        wget -P ./Noto-Color-Emoji/ "${noto_download_url}"
+        wget -q -P ./Noto-Color-Emoji/ "${noto_download_url}"
 
     - name: Zip `MiSans`
       if: ${{ env.MiSans_skip_release != 'true' }}
